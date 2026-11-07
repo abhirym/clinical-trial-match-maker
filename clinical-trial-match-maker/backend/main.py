@@ -1,7 +1,19 @@
 from fastapi import FastAPI, HTTPException, Query
 import httpx
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Clinical Trial Match Maker API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http:/127.0.0.1:5173",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 # ClinicalTrials.gov API endpoint
 CLINICAL_TRIALS_API = "https://clinicaltrials.gov/api/v2/studies"
@@ -42,22 +54,24 @@ def search_trials(condition: str = Query(
         params["pageToken"] = page_token
 
     try:
-        # Send a request to ClinicalTrials.gov
         response = httpx.get(
             CLINICAL_TRIALS_API,
             params=params,
             timeout=20.0,
         )
 
-        # Raise an error if the external API returns an error
         response.raise_for_status()
-
-        # Convert the response into Python dictionaries
         data = response.json()
+
+    except httpx.TimeoutException as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="ClinicalTrials.gov took too long to respond.",
+        ) from exc
 
     except httpx.HTTPError as exc:
         raise HTTPException(
-            status_code =502,
+            status_code=502,
             detail="Unable to retrieve trials from ClinicalTrials.gov.",
         ) from exc
 
