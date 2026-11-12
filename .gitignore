@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Node
+node_modules/
+dist/
+.output/
+
+# Local environment
+frontend/.env.development
+
+# macOS
+.DS_Store
