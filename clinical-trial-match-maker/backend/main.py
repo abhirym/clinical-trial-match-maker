@@ -89,7 +89,11 @@ def search_trials(condition: str = Query(
 
         results.append({
             "nct_id": identification.get("nctId"),
-            "title": identification.get("briefTitle"),
+            "title": (
+                identification.get("officialTitle")
+                or identification.get("briefTitle")
+                or "Untitled study"
+            ),
             "status": status.get("overallStatus"),
             "conditions": conditions_module.get("conditions", []),
             "study_type": design.get("studyType"),
