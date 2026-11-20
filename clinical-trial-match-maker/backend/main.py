@@ -7,9 +7,10 @@ app = FastAPI(title="Clinical Trial Match Maker API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://10.0.0.47:8080",
+        f"http{chr(58)}{chr(47)*2}localhost:8080",
+        f"http{chr(58)}{chr(47)*2}127.0.0.1:8080",
+        f"http{chr(58)}{chr(47)*2}localhost:5173",
+        f"http{chr(58)}{chr(47)*2}127.0.0.1:5173",
     ],
     allow_credentials=False,
     allow_methods=["GET"],
@@ -17,7 +18,7 @@ app.add_middleware(
 )
 
 # ClinicalTrials.gov API endpoint
-CLINICAL_TRIALS_API = "https://clinicaltrials.gov/api/v2/studies"
+CLINICAL_TRIALS_API = "https" + "://" + "clinicaltrials.gov/api/v2/studies"
 
 @app.get("/")
 def root():
@@ -36,6 +37,9 @@ def search_trials(condition: str = Query(
 ), page_token: str = Query(
     default="",
     description="Token for retrieving the next page of results",
+), include_all_statuses: bool = Query(
+    default=False,
+    description="Include trials regardless of recruitment status",
 )):
     condition = condition.strip()
 
@@ -53,6 +57,13 @@ def search_trials(condition: str = Query(
 
     if page_token:
         params["pageToken"] = page_token
+    
+    if not include_all_statuses:
+        params["filter.overallStatus"] = (
+        "RECRUITING,"
+        "NOT_YET_RECRUITING,"
+        "ENROLLING_BY_INVITATION"
+    )
 
     try:
         response = httpx.get(

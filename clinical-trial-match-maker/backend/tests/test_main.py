@@ -150,3 +150,22 @@ def test_external_api_failure_returns_502(mock_get):
     assert response.json()["detail"] == (
         "Unable to retrieve trials from ClinicalTrials.gov."
     )
+
+#7. Test filtering statuses
+@patch("main.httpx.get")
+def test_default_search_excludes_closed_trials(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = {"studies": []}
+    mock_get.return_value = mock_response
+
+    response = client.get("/api/trials")
+
+    assert response.status_code == 200
+
+    params = mock_get.call_args.kwargs["params"]
+
+    assert params["filter.overallStatus"] == (
+        "RECRUITING,"
+        "NOT_YET_RECRUITING,"
+        "ENROLLING_BY_INVITATION"
+    )
