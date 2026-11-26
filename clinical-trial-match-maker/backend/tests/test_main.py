@@ -169,3 +169,21 @@ def test_default_search_excludes_closed_trials(mock_get):
         "NOT_YET_RECRUITING,"
         "ENROLLING_BY_INVITATION"
     )
+
+# 8. Test that all-status mode disables the status filter
+@patch("main.httpx.get")
+def test_include_all_statuses_removes_status_filter(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = {"studies": []}
+    mock_get.return_value = mock_response
+
+    response = client.get(
+        "/api/trials",
+        params={"include_all_statuses": True},
+    )
+
+    assert response.status_code == 200
+
+    params = mock_get.call_args.kwargs["params"]
+
+    assert "filter.overallStatus" not in params
